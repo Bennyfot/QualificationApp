@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="ProjectImport">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Project" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ProjectID" type="xs:string"/>
+              <xs:element name="ProjectTitle" type="xs:string"/>
+              <xs:element name="ProjectStartDate" type="xs:date"/>
+              <xs:element name="ProjectEndDate" type="xs:date" minOccurs="0"/>
+              
+              <xs:element name="Tasks">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Task" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="TaskID" type="xs:string"/>
+                          <xs:element name="TaskTitle" type="xs:string"/>
+                          <xs:element name="TaskDescription" type="xs:string" minOccurs="0"/>
+                          <xs:element name="TaskStartDate" type="xs:date"/>
+                          <xs:element name="TaskEndDate" type="xs:date" minOccurs="0"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
