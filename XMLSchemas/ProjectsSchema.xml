@@ -10,6 +10,7 @@
               <xs:element name="ProjectTitle" type="xs:string"/>
               <xs:element name="ProjectStartDate" type="xs:date"/>
               <xs:element name="ProjectEndDate" type="xs:date" minOccurs="0"/>
+              <xs:element name="ManagerInternalNumber" type="xs:string"/>
               
               <xs:element name="Tasks">
                 <xs:complexType>
@@ -35,4 +36,5 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+
 </xs:schema>
