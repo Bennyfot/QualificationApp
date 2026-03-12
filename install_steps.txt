@@ -1,0 +1,48 @@
+Шаг 1: Установка системного софта
+Открыть терминал в папке с .deb пакетами:
+
+Bash
+cd /Загрузки/core/deb_packages
+sudo dpkg -i *.deb
+
+Шаг 2: Настройка базы данных (Postgres)
+
+Bash
+sudo systemctl start postgresql
+sudo -u postgres psql
+
+SQL
+CREATE DATABASE QualificationBD;
+CREATE USER postgres WITH PASSWORD 'postgres';
+GRANT ALL PRIVILEGES ON DATABASE QualificationBD TO postgres;
+\q
+
+Шаг 3: Создание окружения Python
+Скопировать проект с флешки в домашнюю папку:
+
+cd /Загрузки/core
+python3 -m venv venv
+source venv/bin/activate
+
+Шаг 4: Установка библиотек 
+
+Bash
+python3 -m pip install --no-index --find-links=/media/user/flash/python_packages -r requirements.txt
+
+Шаг 5:
+
+python manage.py migrate
+
+python manage.py createsuperuser
+
+python manage.py runserver
+
+---Ошибки---
+
+"Отказано в доступе" на скрипты: Если Linux не дает запустить сервер, напиши chmod +x manage.py.
+
+Порт 8000 занят: python manage.py runserver 8080.
+
+https://getbootstrap.com/docs/5.0/getting-started/download/
+
+https://www.python.org/downloads/source/
