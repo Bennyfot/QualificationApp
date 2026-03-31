@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчет по компетенциям</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/chart.js' %}"></script>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'manager_projects' %}">QualificationApp</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-light btn-sm px-3" href="{% url 'profile' %}">Личный кабинет ({{ user.username }})</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-5">
+    <h2 class="fw-bold mb-4">Отчет по развитию компетенций</h2>
+
+    <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 15px;">
+        <form method="get" class="row g-3 align-items-end">
+			{% if is_admin %}
+			<div class="col-md-3">
+				<label class="form-label small fw-bold">Сотрудник</label>
+				<select name="employee" class="form-select">
+					<option value="">Все сотрудники</option>
+					{% for emp in employees %}
+					<option value="{{ emp.id }}" {% if selected_employee == emp.id %}selected{% endif %}>{{ emp.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			{% else %}
+			<input type="hidden" name="employee" value="{{ selected_employee }}">
+			{% endif %}
+
+			<div class="col-md-{% if is_admin %}4{% else %}7{% endif %}">
+				<label class="form-label small fw-bold">Конкретный навык</label>
+				<select name="skill" class="form-select">
+					<option value="">Все навыки</option>
+					{% for skill in skills %}
+					<option value="{{ skill.id }}" {% if selected_skill == skill.id %}selected{% endif %}>{{ skill.name|truncatechars:70 }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			
+			<div class="col-md-2">
+				<button type="submit" class="btn btn-primary w-100">Показать</button>
+			</div>
+			
+			<!--<div class="col-md-3">
+				<a href="?{{ request.GET.urlencode }}&export=pdf" class="btn btn-danger w-100">
+					Скачать PDF
+				</a>
+			</div>-->
+		</form>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                <h5 class="fw-bold mb-3">Динамика роста уровня (%)</h5>
+                <canvas id="skillChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                <h5 class="fw-bold mb-3">История изменений</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Дата</th>
+                                <th>Сотрудник</th>
+                                <th>Навык</th>
+                                <th>Уровень</th>
+                                <th>Причина изменения</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td class="small text-muted">{{ log.timestamp|date:"d.m.Y H:i" }}</td>
+                                <td class="fw-bold">{{ log.employee.name }}</td>
+                                <td class="small">{{ log.skill_detail.name }}</td>
+                                <td>
+                                    <span class="badge bg-success">{{ log.level_reached }}%</span>
+                                </td>
+                                <td class="small italic text-muted">{{ log.reason }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-4">Данные за выбранный период не найдены</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('skillChart').getContext('2d');
+    const chartData = {
+        labels: {{ chart_data.labels|safe }},
+        datasets: [{
+            label: 'Уровень освоения',
+            data: {{ chart_data.values|safe }},
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { min: 0, max: 100 }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

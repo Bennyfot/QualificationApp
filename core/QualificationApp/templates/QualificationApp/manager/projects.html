@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мои проекты</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .project-card { 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            border: none; 
+            border-radius: 15px; 
+        }
+        .project-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+        }
+        .btn-view { border-radius: 10px; }
+    </style>
+</head>
+<body>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+		<div class="container">
+			<a class="navbar-brand fw-bold" href="{% url 'manager_projects' %}">QualificationApp</a>
+			<div class="collapse navbar-collapse">
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item">
+						<a class="nav-link btn btn-outline-light btn-sm px-3" href="{% url 'profile' %}">
+							Личный кабинет ({{ user.username }})
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Управление проектами</h2>
+    </div>
+
+    <div class="row">
+        {% for project in projects %}
+		<div class="col-md-4 mb-4">
+			<div class="card h-100 project-card position-relative">
+				<div class="card-body">
+					<a href="{% url 'project_tasks' project.id %}" class="stretched-link"></a>
+					
+					<h5 class="card-title fw-bold text-primary">{{ project.name }}</h5>
+					<hr>
+					
+					<div class="stats-group">
+						<div class="d-flex justify-content-between mb-1">
+							<span class="small text-muted">Ожидают:</span>
+							<span class="badge bg-secondary rounded-pill">{{ project.stats.todo }}</span>
+						</div>
+						<div class="d-flex justify-content-between mb-1">
+							<span class="small text-muted">В работе:</span>
+							<span class="badge bg-primary rounded-pill">{{ project.stats.progress }}</span>
+						</div>
+						<div class="d-flex justify-content-between">
+							<span class="small text-muted">Завершено:</span>
+							<span class="badge bg-success rounded-pill">{{ project.stats.done }}</span>
+						</div>
+					</div>
+				</div>
+				<div class="card-footer bg-transparent border-0">
+					<small class="text-muted">Всего задач: {{ project.task_set.count }}</small>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

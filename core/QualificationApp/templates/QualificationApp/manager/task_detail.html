@@ -1,0 +1,262 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ task.name }}</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'manager_projects' %}">QualificationApp</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-light btn-sm px-3" href="{% url 'profile' %}">Личный кабинет ({{ user.username }})</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+	<nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'manager_projects' %}">Проекты</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'project_tasks' task.project.id %}">{{ task.project.name }}</a></li>
+            <li class="breadcrumb-item active">{{ task.name }}</li>
+        </ol>
+    </nav>
+    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+		<div class="card-body p-4">
+			<div class="row mt-4">
+				<div class="col-md-8">
+					<h5>Описание задачи</h5>
+					<p class="text-muted">{{ task.description|default:"Описание пока не заполнено." }}</p>
+					
+					<h5 class="mt-4 d-flex justify-content-between">
+						Требуемые навыки
+						{% if task.status != 'completed' %}
+						<button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">+</button>
+						{% endif %}
+					</h5>
+					
+					<div class="d-flex flex-wrap gap-2 mt-2">
+						{% for skill in task.required_skills.all %}
+							<div class="badge bg-light text-dark border p-2 text-wrap text-start" style="max-width: 100%; line-height: 1.4;">
+								{{ skill.name }}
+								{% if task.status != 'completed' %}
+								<form action="{% url 'remove_task_skill' task.id skill.id %}" method="post" class="d-inline ms-2">
+									{% csrf_token %}
+									<button type="submit" class="btn-close" style="font-size: 0.6rem;"></button>
+								</form>
+								{% endif %}
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+
+				<div class="col-md-4 border-start">
+					<h5>Управление задачей</h5>
+					<div class="card bg-light border-0">
+						<div class="card-body">
+							<p><strong>Статус:</strong> {{ task.get_status_display }}</p>
+							
+							{% if task.status != 'completed' %}
+							<form method="post" action="{% url 'assign_task' task.id %}">
+								{% csrf_token %}
+								<div class="input-group">
+									<select name="employee_id" class="form-select">
+										<option value="">-- Выбрать исполнителя --</option>
+										{% for emp in all_employees %}
+											<option value="{{ emp.id }}" {% if task.executor == emp %}selected{% endif %}>
+												{{ emp.name }} {{ emp.match_score }}% 
+											</option>
+										{% endfor %}
+									</select>
+									<button class="btn btn-primary">Назначить</button>
+								</div>
+							</form>
+							{% else %}
+							<p><strong>Исполнитель:</strong> {{ task.executor.name|default:"Не был назначен" }}</p>
+							{% endif %}
+
+							{% if task.status == 'to_confirm' and user == task.project.manager.user %}
+							<div class="card p-3 shadow-sm border-0 mb-4 bg-light">
+								<h6>Оценить</h6>
+								<form action="{% url 'rate_task' task.id %}" method="post" class="d-flex flex-wrap gap-2">
+									{% csrf_token %}
+									<button type="submit" name="action" value="excellent" class="btn btn-success">
+										Отлично
+									</button>
+									<button type="submit" name="action" value="good" class="btn btn-info text-white">
+										Хорошо
+									</button>
+									<button type="submit" name="action" value="rework" class="btn btn-danger">
+										На переделку
+									</button>
+								</form>
+							</div>
+							{% endif %}
+
+							{% if task.status == 'completed' and task.grade %}
+							<div class="alert alert-secondary mt-3">
+								Результат проверки: <strong>{{ task.get_grade_display }}</strong>
+							</div>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" id="addSkillModal" tabindex="-1">
+			  <div class="modal-dialog modal-lg">
+				<div class="modal-content">
+				  <form action="{% url 'add_task_skill' task.id %}" method="post">
+					{% csrf_token %}
+					<div class="modal-header">
+						<h5 class="modal-title">Добавить из профстандарта</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="mb-3">
+							<label class="form-label small fw-bold">1. Профессия</label>
+							<select id="select-prof" class="form-select mb-2">
+								<option value="">-- Выберите профессию --</option>
+								{% for prof in all_professions %}
+								<option value="{{ prof.id }}">{{ prof.code }} {{ prof.name|truncatechars:100 }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
+						<div class="mb-3">
+							<label class="form-label small fw-bold">2. Обобщенная трудовая функция (ОТФ)</label>
+							<select id="select-otf" class="form-select mb-2" disabled>
+								<option value="">-- Сначала выберите профессию --</option>
+							</select>
+						</div>
+
+						<div class="mb-3">
+							<label class="form-label small fw-bold">3. Трудовая функция (ТФ)</label>
+							<select id="select-tf" class="form-select mb-2" disabled>
+								<option value="">-- Сначала выберите ОТФ --</option>
+							</select>
+						</div>
+
+						<div class="mb-3">
+							<label class="form-label small fw-bold">4. Знание / Умение / Действие</label>
+							<select id="select-detail" name="skill_id" class="form-select mb-2" disabled required>
+								<option value="">-- Сначала выберите ТФ --</option>
+							</select>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+						<button type="submit" id="btn-submit-skill" class="btn btn-primary" disabled>Добавить в задачу</button>
+					</div>
+				  </form>
+				</div>
+			  </div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Данные из Django в формате JSON для JS
+    const hierarchy = {
+		{% for prof in all_professions %}
+		"{{ prof.id }}": {
+			{% for otf in prof.generalizedlaborfunction_set.all %}
+			"{{ otf.id }}": {
+				"name": "{{ otf.code }} {{ otf.name|escapejs|truncatechars:100 }}",
+				"tfs": {
+					{% for tf in otf.laborfunction_set.all %}
+					"{{ tf.id }}": {
+						"name": "{{ tf.code }} {{ tf.name|escapejs|truncatechars:100 }}",
+						"details": [
+							{% for detail in tf.details.all %} 
+								{% if detail.id not in existing_skills_ids %}
+								{
+									"id": "{{ detail.id }}", 
+									"name": "[{{ detail.get_type_display }}] {{ detail.name|escapejs|truncatechars:200 }}"
+								},
+								{% endif %}
+							{% endfor %}
+						]
+					},
+					{% endfor %}
+				}
+			},
+			{% endfor %}
+		},
+		{% endfor %}
+	};
+
+    const selProf = document.getElementById('select-prof');
+    const selOtf = document.getElementById('select-otf');
+    const selTf = document.getElementById('select-tf');
+    const selDetail = document.getElementById('select-detail');
+    const btnSubmit = document.getElementById('btn-submit-skill');
+
+    // Выбор Профессии -> Заполнение ОТФ
+    selProf.addEventListener('change', function() {
+        selOtf.innerHTML = '<option value="">-- Выберите ОТФ --</option>';
+        selTf.innerHTML = '<option value="">-- Сначала выберите ОТФ --</option>';
+        selDetail.innerHTML = '<option value="">-- Сначала выберите ТФ --</option>';
+        selOtf.disabled = true; selTf.disabled = true; selDetail.disabled = true; btnSubmit.disabled = true;
+
+        if (this.value && hierarchy[this.value]) {
+            const otfs = hierarchy[this.value];
+            for (let id in otfs) {
+                selOtf.innerHTML += `<option value="${id}">${otfs[id].name}</option>`;
+            }
+            selOtf.disabled = false;
+        }
+    });
+
+    // Выбор ОТФ -> Заполнение ТФ
+    selOtf.addEventListener('change', function() {
+        selTf.innerHTML = '<option value="">-- Выберите ТФ --</option>';
+        selDetail.innerHTML = '<option value="">-- Сначала выберите ТФ --</option>';
+        selTf.disabled = true; selDetail.disabled = true; btnSubmit.disabled = true;
+
+        const profId = selProf.value;
+        if (this.value && hierarchy[profId][this.value]) {
+            const tfs = hierarchy[profId][this.value].tfs;
+            for (let id in tfs) {
+                selTf.innerHTML += `<option value="${id}">${tfs[id].name}</option>`;
+            }
+            selTf.disabled = false;
+        }
+    });
+
+    // Выбор ТФ -> Заполнение Деталей
+    selTf.addEventListener('change', function() {
+        selDetail.innerHTML = '<option value="">-- Выберите деталь --</option>';
+        selDetail.disabled = true; btnSubmit.disabled = true;
+
+        const profId = selProf.value;
+        const otfId = selOtf.value;
+        if (this.value && hierarchy[profId][otfId].tfs[this.value]) {
+            const details = hierarchy[profId][otfId].tfs[this.value].details;
+            if (details.length === 0) {
+                selDetail.innerHTML = '<option value="">(Все функции этого ТФ уже добавлены)</option>';
+            } else {
+                details.forEach(d => {
+                    selDetail.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                });
+                selDetail.disabled = false;
+            }
+        }
+    });
+
+    // Активация кнопки сохранения при финальном выборе
+    selDetail.addEventListener('change', function() {
+        btnSubmit.disabled = !this.value;
+    });
+});
+</script>
+</body>
+</html>

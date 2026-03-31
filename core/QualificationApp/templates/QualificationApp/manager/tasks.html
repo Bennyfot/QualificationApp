@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задачи проекта | {{ project.name }}</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-panel { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0; }
+        .task-link { color: #1e3c72; font-weight: 600; text-decoration: none; }
+        .task-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'manager_projects' %}">QualificationApp</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-light btn-sm px-3" href="{% url 'profile' %}">Личный кабинет ({{ user.username }})</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'manager_projects' %}">Проекты</a></li>
+            <li class="breadcrumb-item active">{{ project.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="header-panel d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">{{ project.name }}</h2>
+                <small>Статус: <strong>{{ project.status }}</strong></small>
+            </div>
+            <span class="badge bg-light text-dark px-3 py-2">Всего задач: {{ tasks.count }}</span>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Задача</th>
+                        <th>Исполнитель</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td class="ps-4">
+                            <a href="{% url 'task_detail' task.id %}" class="task-link">{{ task.name }}</a>
+                        </td>
+                        <td>{{ task.executor.name|default:"<span class='text-muted'>—</span>"|safe }}</td>
+                        <td>
+                            {% if task.status == 'todo' %}<span class="badge bg-secondary">Ожидание</span>
+                            {% elif task.status == 'in_progress' %}<span class="badge bg-primary">В работе</span>
+							{% elif task.status == 'to_confirm' %}<span class="badge bg-info">Нужно подтвердить</span>
+                            {% else %}<span class="badge bg-success">Завершена</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
